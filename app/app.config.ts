@@ -1,11 +1,8 @@
 export default defineAppConfig({
   ui: {
-    primary: "orange",
-    gray: "zinc",
-    button: {
-      default: {
-        size: "lg",
-      },
+    colors: {
+      primary: "orange",
+      neutral: "zinc",
     },
   },
 

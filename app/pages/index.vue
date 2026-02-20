@@ -1,40 +1,22 @@
 <script setup lang="ts">
-// 💡 BELAJAR TYPESCRIPT: INTERFACE
-// Interface adalah "Cetakan" atau "Kontrak" bentuk data.
-// Kita memaksa formState untuk HANYA boleh berisi data di bawah ini.
-interface FormState {
-  destination: string;
-  pax: number;
-  budget: "Hemat" | "Standar" | "Mewah"; // Hanya boleh 3 teks ini, selain itu TS akan Error!
-}
-
-// Menerapkan interface ke dalam reactive state Vue
-const formState = reactive<FormState>({
-  destination: "",
-  pax: 1,
-  budget: "Standar", // Coba kamu ganti jadi 'Miskin', garis merah akan muncul di VS Code!
-});
-
-const budgetOptions = ["Hemat", "Standar", "Mewah"];
-
-// State untuk UI
-const promptText = ref<string>("");
-const isGenerating = ref<boolean>(false);
-
-// Fungsi Generate
-const generateItinerary = async (mode: "chat" | "form") => {
-  isGenerating.value = true;
-  setTimeout(() => {
-    isGenerating.value = false;
-    alert(`Data siap dikirim ke Laravel via mode: ${mode}`);
-  }, 1500);
-};
-
 // Konfigurasi Tab UI
 const tabItems = [
-  { key: "chat", label: "AI Assistant", icon: "i-heroicons-sparkles" },
-  { key: "form", label: "Manual Planner", icon: "i-heroicons-adjustments-horizontal" },
+  { label: "AI Assistant", icon: "i-heroicons-sparkles", slot: "chat" },
+  { label: "Manual Planner", icon: "i-heroicons-adjustments-horizontal", slot: "form" },
 ];
+
+// Menangkap data dari komponen anak
+const handleTripSubmission = (eventData: { mode: string; payload: any }) => {
+  console.log("Data diterima dari komponen:", eventData);
+
+  if (eventData.mode === "chat") {
+    // Nanti kirim ke: POST /api/trip/generate-chat
+    alert(`Mengirim Prompt ke API Laravel:\n${eventData.payload}`);
+  } else {
+    // Nanti kirim ke: POST /api/trip/generate-form
+    alert(`Mengirim Form ke API Laravel untuk tujuan: ${eventData.payload.destination}`);
+  }
+};
 </script>
 
 <template>
@@ -44,38 +26,20 @@ const tabItems = [
         Rencanakan Perjalananmu <br class="hidden sm:block" />
         dalam <span class="text-orange-500">Hitungan Detik</span>
       </h1>
+      <p class="text-zinc-600 dark:text-zinc-400 max-w-xl mx-auto mt-4">Gunakan asisten AI cerdas kami atau isi form manual untuk mendapatkan itinerary lengkap beserta tiket dan hotel.</p>
     </div>
 
     <UCard class="shadow-xl dark:shadow-none border border-zinc-200 dark:border-zinc-800">
       <UTabs :items="tabItems" class="w-full">
-        <template #item="{ item }">
+        <template #chat>
           <div class="pt-6">
-            <div v-if="item.key === 'chat'" class="space-y-4">
-              <UTextarea v-model="promptText" autoresize :maxrows="6" placeholder="Contoh: Buatkan saya itinerary 3 hari di Tokyo..." size="xl" />
-              <div class="flex justify-end">
-                <UButton size="xl" icon="i-heroicons-paper-airplane" :loading="isGenerating" @click="generateItinerary('chat')"> Generate AI Trip </UButton>
-              </div>
-            </div>
+            <TripChatPlanner @submit="handleTripSubmission" />
+          </div>
+        </template>
 
-            <div v-else-if="item.key === 'form'" class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <UFormGroup label="Kota Tujuan">
-                  <UInput v-model="formState.destination" icon="i-heroicons-map-pin" placeholder="Misal: Kyoto" />
-                </UFormGroup>
-
-                <UFormGroup label="Jumlah Peserta">
-                  <UInput v-model="formState.pax" type="number" min="1" icon="i-heroicons-user-group" />
-                </UFormGroup>
-              </div>
-
-              <UFormGroup label="Tingkat Budget">
-                <USelect v-model="formState.budget" :options="budgetOptions" icon="i-heroicons-banknotes" />
-              </UFormGroup>
-
-              <div class="flex justify-end pt-2">
-                <UButton size="xl" icon="i-heroicons-magifying-glass" :loading="isGenerating" @click="generateItinerary('form')"> Cari Itinerary </UButton>
-              </div>
-            </div>
+        <template #form>
+          <div class="pt-6">
+            <TripManualPlanner @submit="handleTripSubmission" />
           </div>
         </template>
       </UTabs>
