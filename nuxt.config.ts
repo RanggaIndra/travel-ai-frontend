@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: "https://subzonary-badgeringly-lourie.ngrok-free.dev/api",
+      apiBase: "https://dui-shed-attributes-active.trycloudflare.com/api",
     },
   },
 });

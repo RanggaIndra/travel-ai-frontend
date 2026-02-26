@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { error } from "#build/ui";
-
 const api = useApi();
 const auth = useAuth();
 const form = reactive({ email: "", password: "" });
@@ -16,7 +14,7 @@ const handleLogin = async () => {
     auth.user.value = res.user;
     navigateTo("/");
   } catch (err: any) {
-    errorMsg.value = err.response?._data?.message || "Login Gagal";
+    errorMsg.value = err._data?.message || "Login Gagal";
   } finally {
     loading.value = false;
   }

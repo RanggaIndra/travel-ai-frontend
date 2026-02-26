@@ -6,9 +6,18 @@ export const useApi = () => {
     baseURL: config.public.apiBase as string,
     headers: {
       Accept: "application/json",
-      "ngrok-skip-browser-warning": "true",
-      ...(token.value ? { Authorization: `Bearer ${token.value}` } : {}),
+      "Content-Type": "application/json",
     },
+
+    onRequest({ options }) {
+      if (token.value) {
+        options.headers = {
+          ...options.headers,
+          Authorization: `Bearer ${token.value}`,
+        };
+      }
+    },
+
     async onResponseError({ response }) {
       if (response.status === 401) {
         token.value = null;

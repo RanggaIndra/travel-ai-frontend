@@ -3,6 +3,7 @@ const api = useApi();
 const auth = useAuth();
 const form = reactive({ name: "", email: "", password: "", password_confirmation: "" });
 const loading = ref(false);
+const errorMsg = ref("");
 
 const handleRegister = async () => {
   loading.value = true;
@@ -11,8 +12,8 @@ const handleRegister = async () => {
     auth.token.value = res.token;
     await auth.fetchUser();
     navigateTo("/");
-  } catch (err) {
-    alert("Gagal mendaftar. Pastikan email belum dipakai dan password cocok.");
+  } catch (err: any) {
+    errorMsg.value = err.data?.message || "Gagal mendaftar. Pastikan email belum dipakai dan password cocok.";
   } finally {
     loading.value = false;
   }
@@ -27,6 +28,7 @@ const handleRegister = async () => {
       <UFormField label="Email"><UInput v-model="form.email" type="email" class="w-full" /></UFormField>
       <UFormField label="Password"><UInput v-model="form.password" type="password" class="w-full" /></UFormField>
       <UFormField label="Konfirmasi Password"><UInput v-model="form.password_confirmation" type="password" class="w-full" /></UFormField>
+      <p v-if="errorMsg" class="text-red-500 text-sm text-center">{{ errorMsg }}</p>
       <UButton class="w-full justify-center" @click="handleRegister" :loading="loading">Daftar</UButton>
     </div>
   </div>
