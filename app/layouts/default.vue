@@ -29,9 +29,7 @@ const isDark = computed({
           </ClientOnly>
 
           <template v-if="auth.user.value">
-            <UButton to="/history" color="neutral" variant="ghost" icon="i-heroicons-clock" label="History" />
-            <UButton color="neutral" variant="outline" icon="i-heroicons-user" :label="auth.user.value.name" />
-            <UButton color="error" variant="ghost" icon="i-heroicons-arrow-right-start-on-rectangle" @click="auth.logout" />
+            <UButton to="/profile" color="neutral" variant="outline" icon="i-heroicons-user-circle" :label="auth.user.value.name" />
           </template>
           <template v-else>
             <UButton to="/login" color="primary" variant="solid" label="Sign In" />
