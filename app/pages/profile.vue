@@ -52,7 +52,7 @@ const updateProfile = async () => {
 const fetchHistory = async () => {
   historyLoading.value = true;
   try {
-    const res: any = await api("/trips");
+    const res: any = await api("/trip/history");
     trips.value = res.data ?? res ?? [];
   } catch (e) {
     trips.value = [];
@@ -231,7 +231,7 @@ const sidebarItems = [
                         {{ trip.dest_city ?? trip.meta?.dest_city_code ?? "?" }}
                       </p>
                       <p class="text-xs text-zinc-500 mt-0.5">
-                        {{ formatDate(trip.travel_date ?? trip.meta?.date) }}
+                        {{ formatDate(trip.date ?? trip.meta?.date) }}
                         · {{ trip.duration_days ?? trip.meta?.duration_days ?? "?" }} hari · {{ trip.travelers ?? trip.meta?.travelers ?? 1 }} orang
                       </p>
                     </div>

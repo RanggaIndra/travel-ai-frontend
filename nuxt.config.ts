@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: "https://dui-shed-attributes-active.trycloudflare.com/api",
+      apiBase: "https://ebook-hardcover-cherry-keith.trycloudflare.com/api",
     },
   },
 });
