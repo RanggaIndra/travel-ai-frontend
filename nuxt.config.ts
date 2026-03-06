@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: "https://ebook-hardcover-cherry-keith.trycloudflare.com/api",
+      apiBase: "https://gently-milk-des-intellectual.trycloudflare.com/api",
     },
   },
 });

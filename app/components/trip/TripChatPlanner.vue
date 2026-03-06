@@ -17,7 +17,6 @@ const generateTrip = async () => {
   errorMessage.value = "";
 
   try {
-    // ✅ Unified endpoint — matches backend POST /api/trip/generate
     const response = await api("/trip/generate", {
       method: "POST",
       body: { prompt: promptText.value.trim() },
