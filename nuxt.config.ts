@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: "https://graduated-negotiation-fuji-reporter.trycloudflare.com/api",
+      apiBase: "https://boots-canyon-dim-appropriations.trycloudflare.com/api",
     },
   },
 });

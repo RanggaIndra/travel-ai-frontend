@@ -10,17 +10,6 @@ const tabItems = [
   { label: "Manual Planner", icon: "i-heroicons-adjustments-horizontal", slot: "form" },
 ];
 
-/**
- * Real API response shape from TripController@generate (success):
- * {
- *   status, message, source, trip_id, booking_url,
- *   meta:        { origin_city_code, dest_city_code, date, duration_days, travelers, detected_interests }
- *   budget_info: { total_budget, category, style_description, estimated_breakdown, budget_feasibility }
- *   itinerary:   [ { day, theme, activities: [{time, activity, location, duration_minutes, estimated_cost, notes}], daily_total_estimated } ]
- *   tips:        { hotels, must_eat, local_tips, best_time_to_visit }
- *   flight_live: Amadeus object | null
- * }
- */
 const tripResult = ref<any>(null);
 const errorBanner = ref<string>("");
 
@@ -47,6 +36,14 @@ const formatRupiah = (val: number) =>
   }).format(val ?? 0);
 
 const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").substring(0, 16) : "-");
+
+// Convert Amadeus ISO duration "PT7H5M" → "7j 5m"
+const formatDuration = (iso: string) => {
+  if (!iso) return "";
+  const h = iso.match(/(\d+)H/)?.[1];
+  const m = iso.match(/(\d+)M/)?.[1];
+  return [h ? `${h}j` : "", m ? `${m}m` : ""].filter(Boolean).join(" ");
+};
 </script>
 
 <template>
@@ -128,7 +125,7 @@ const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").
         </div>
       </UCard>
 
-      <!-- Budget Analysis — key: budget_info -->
+      <!-- Budget Analysis -->
       <UCard class="border border-zinc-200 dark:border-zinc-800">
         <h3 class="font-semibold text-base mb-3 flex items-center gap-2">
           <UIcon name="i-heroicons-banknotes" class="text-orange-500" />
@@ -157,29 +154,69 @@ const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").
         </div>
       </UCard>
 
-      <!-- Flight Live -->
+      <!-- ===== FLIGHT LIVE ===== -->
       <UCard v-if="tripResult.flight_live" class="border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
         <h3 class="font-semibold text-base mb-3 flex items-center gap-2">
           <UIcon name="i-heroicons-paper-airplane" class="text-blue-500" />
           Penerbangan Tersedia (Live Amadeus)
         </h3>
-        <div class="text-sm space-y-2">
+
+        <div class="text-sm space-y-3">
           <div v-for="(itin, i) in tripResult.flight_live?.itineraries" :key="i">
-            <div v-for="seg in itin.segments" :key="seg.id" class="flex justify-between py-1 border-b border-blue-100 dark:border-blue-900 last:border-0">
-              <span class="font-medium">{{ seg.carrierCode }}{{ seg.number }}</span>
-              <span>{{ seg.departure?.iataCode }} → {{ seg.arrival?.iataCode }}</span>
-              <span class="text-zinc-500">{{ formatFlightTime(seg.departure?.at) }}</span>
+            <div v-for="(seg, si) in itin.segments" :key="seg.id ?? si" class="space-y-2">
+              <!-- Segment row -->
+              <div class="flex flex-wrap justify-between items-center py-1.5 gap-2 border-b border-blue-100 dark:border-blue-900 last:border-0">
+                <span class="font-semibold min-w-[60px]">{{ seg.carrierCode }}{{ seg.number }}</span>
+                <span class="text-zinc-600 dark:text-zinc-300"> {{ seg.departure?.iataCode }} → {{ seg.arrival?.iataCode }} </span>
+                <span class="text-zinc-500 text-xs">{{ formatFlightTime(seg.departure?.at) }}</span>
+                <span v-if="seg.duration" class="text-zinc-400 text-xs bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                  {{ formatDuration(seg.duration) }}
+                </span>
+              </div>
+
+              <!-- Transit layover alert (injected by backend) -->
+              <div
+                v-if="seg.transit_tips?.length"
+                class="rounded-lg p-3 space-y-1.5"
+                :class="seg.needs_transit_hotel ? 'bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800' : 'bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800'"
+              >
+                <div class="flex items-center gap-2 font-semibold text-xs uppercase tracking-wide" :class="seg.needs_transit_hotel ? 'text-amber-700 dark:text-amber-400' : 'text-sky-700 dark:text-sky-400'">
+                  <UIcon :name="seg.needs_transit_hotel ? 'i-heroicons-moon' : 'i-heroicons-clock'" class="w-4 h-4 shrink-0" />
+                  {{ seg.needs_transit_hotel ? `Transit Panjang — Disarankan Menginap (${seg.transit_layover_hours} jam)` : `Transit ${seg.transit_layover_hours} Jam — Tips Singkat` }}
+                </div>
+                <ul class="space-y-1">
+                  <li v-for="(tip, ti) in seg.transit_tips" :key="ti" class="text-xs text-zinc-600 dark:text-zinc-400">
+                    {{ tip }}
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
-          <div class="flex justify-between pt-2 font-semibold">
+
+          <!-- Total price -->
+          <div class="flex justify-between pt-2 font-semibold border-t border-blue-100 dark:border-blue-900">
             <span>Estimasi Harga</span>
             <span>{{ tripResult.flight_live?.price?.grandTotal ? formatRupiah(Number(tripResult.flight_live.price.grandTotal)) : "-" }}</span>
           </div>
+
+          <!-- Flight booking buttons -->
+          <div class="flex flex-wrap gap-2 pt-1">
+            <UButton v-if="tripResult.traveloka_url" :to="tripResult.traveloka_url" target="_blank" size="sm" color="primary" icon="i-heroicons-ticket"> Pesan di Traveloka </UButton>
+            <UButton v-if="tripResult.booking_url" :to="tripResult.booking_url" target="_blank" size="sm" color="neutral" variant="soft" icon="i-heroicons-globe-alt"> Cari di Booking.com </UButton>
+          </div>
         </div>
       </UCard>
-      <UAlert v-else color="neutral" icon="i-heroicons-information-circle" title="Data penerbangan live tidak tersedia" description="Gunakan tombol Google Flights di bawah untuk mencari tiket secara manual." />
 
-      <!-- Itinerary — key: itinerary -->
+      <!-- No flight fallback — still show search buttons -->
+      <div v-else class="space-y-3">
+        <UAlert color="neutral" icon="i-heroicons-information-circle" title="Data penerbangan live tidak tersedia" description="Gunakan tombol di bawah untuk mencari tiket secara manual." />
+        <div class="flex flex-wrap gap-2">
+          <UButton v-if="tripResult.traveloka_url" :to="tripResult.traveloka_url" target="_blank" size="sm" color="primary" icon="i-heroicons-ticket"> Cari di Traveloka </UButton>
+          <UButton v-if="tripResult.booking_url" :to="tripResult.booking_url" target="_blank" size="sm" color="neutral" variant="soft" icon="i-heroicons-globe-alt"> Cari di Booking.com </UButton>
+        </div>
+      </div>
+
+      <!-- ===== ITINERARY ===== -->
       <UCard class="border border-zinc-200 dark:border-zinc-800">
         <h3 class="font-semibold text-base mb-4 flex items-center gap-2">
           <UIcon name="i-heroicons-map" class="text-orange-500" />
@@ -209,7 +246,7 @@ const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").
         </div>
       </UCard>
 
-      <!-- Hotels — key: tips.hotels -->
+      <!-- ===== HOTELS ===== -->
       <UCard v-if="tripResult.tips?.hotels?.length" class="border border-zinc-200 dark:border-zinc-800">
         <h3 class="font-semibold text-base mb-3 flex items-center gap-2">
           <UIcon name="i-heroicons-building-office-2" class="text-orange-500" />
@@ -222,15 +259,19 @@ const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").
             <UBadge color="neutral" variant="subtle" class="mt-1 text-xs">{{ hotel.category }}</UBadge>
             <p class="text-orange-500 mt-1">{{ formatRupiah(hotel.estimated_price_per_night) }} / malam</p>
 
-            <div class="flex gap-2 mt-3">
-              <UButton v-if="hotel.booking_search_url" :to="hotel.booking_search_url" target="_blank" size="xs" color="primary" variant="soft" icon="i-heroicons-building-office-2"> Booking.com </UButton>
+            <div class="flex flex-wrap gap-2 mt-3">
+              <!-- Traveloka — primary -->
+              <UButton v-if="hotel.traveloka_search_url" :to="hotel.traveloka_search_url" target="_blank" size="xs" color="primary" variant="soft" icon="i-heroicons-building-office-2"> Traveloka </UButton>
+              <!-- Booking.com -->
+              <UButton v-if="hotel.booking_search_url" :to="hotel.booking_search_url" target="_blank" size="xs" color="neutral" variant="soft" icon="i-heroicons-building-office-2"> Booking.com </UButton>
+              <!-- Agoda -->
               <UButton v-if="hotel.agoda_search_url" :to="hotel.agoda_search_url" target="_blank" size="xs" color="neutral" variant="soft" icon="i-heroicons-globe-alt"> Agoda </UButton>
             </div>
           </div>
         </div>
       </UCard>
 
-      <!-- Must Eat — key: tips.must_eat -->
+      <!-- ===== MUST EAT ===== -->
       <UCard v-if="tripResult.tips?.must_eat?.length" class="border border-zinc-200 dark:border-zinc-800">
         <h3 class="font-semibold text-base mb-3 flex items-center gap-2">
           <UIcon name="i-heroicons-cake" class="text-orange-500" />
@@ -247,7 +288,7 @@ const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").
         </div>
       </UCard>
 
-      <!-- Local Tips — key: tips.local_tips -->
+      <!-- ===== LOCAL TIPS ===== -->
       <UCard v-if="tripResult.tips?.local_tips?.length" class="border border-zinc-200 dark:border-zinc-800">
         <h3 class="font-semibold text-base mb-3 flex items-center gap-2">
           <UIcon name="i-heroicons-light-bulb" class="text-orange-500" />
@@ -262,9 +303,10 @@ const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").
         <p v-if="tripResult.tips?.best_time_to_visit" class="mt-3 pt-3 border-t border-zinc-100 dark:border-zinc-800 text-sm text-zinc-500">🗓 <strong>Waktu terbaik:</strong> {{ tripResult.tips.best_time_to_visit }}</p>
       </UCard>
 
-      <!-- CTA -->
+      <!-- ===== BOTTOM CTA ===== -->
       <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-        <UButton v-if="tripResult.booking_url" :to="tripResult.booking_url" target="_blank" color="primary" size="lg" icon="i-heroicons-ticket"> Cari Tiket di Booking.comn </UButton>
+        <UButton v-if="tripResult.traveloka_url" :to="tripResult.traveloka_url" target="_blank" color="primary" size="lg" icon="i-heroicons-ticket"> Cari Tiket di Traveloka </UButton>
+        <UButton v-if="tripResult.booking_url" :to="tripResult.booking_url" target="_blank" color="neutral" variant="soft" size="lg" icon="i-heroicons-globe-alt"> Cari di Booking.com </UButton>
         <UButton color="neutral" variant="outline" size="lg" icon="i-heroicons-arrow-path" @click="resetPlanner"> Buat Perjalanan Baru </UButton>
       </div>
     </div>
