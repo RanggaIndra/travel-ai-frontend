@@ -68,13 +68,12 @@ const switchTab = (tab: "profile" | "history") => {
   }
 };
 
-const formatRupiah = (val: number) => {
+const formatRupiah = (val: number) =>
   new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
     maximumFractionDigits: 0,
   }).format(val ?? 0);
-};
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "-";
@@ -225,29 +224,30 @@ const sidebarItems = [
                       <UIcon name="i-heroicons-paper-airplane" class="text-orange-500 w-5 h-5 transform -rotate-45" />
                     </div>
                     <div class="min-w-0">
-                      <p class="font-semibold text-sm truncate">
-                        {{ trip.origin_city ?? trip.meta?.origin_city_code ?? "?" }}
-                        →
-                        {{ trip.dest_city ?? trip.meta?.dest_city_code ?? "?" }}
-                      </p>
+                      <!-- ✅ destination is the correct DB column -->
+                      <p class="font-semibold text-sm truncate">CGK → {{ trip.destination ?? "-" }}</p>
+                      <!-- ✅ start_date, duration_days, travelers are correct DB columns -->
                       <p class="text-xs text-zinc-500 mt-0.5">
-                        {{ formatDate(trip.date ?? trip.meta?.date) }}
-                        · {{ trip.duration_days ?? trip.meta?.duration_days ?? "?" }} hari · {{ trip.travelers ?? trip.meta?.travelers ?? 1 }} orang
+                        {{ formatDate(trip.start_date) }}
+                        · {{ trip.duration_days ?? "?" }} hari · {{ trip.travelers ?? 1 }} orang
                       </p>
                     </div>
                   </div>
                   <div class="text-right shrink-0">
+                    <!-- ✅ budget_estimate is the correct DB column -->
                     <p class="text-sm font-semibold text-orange-500">
-                      {{ trip.total_budget ? formatRupiah(trip.total_budget) : "-" }}
+                      {{ trip.budget_estimate ? formatRupiah(trip.budget_estimate) : "-" }}
                     </p>
-                    <UBadge v-if="trip.source" color="neutral" variant="subtle" class="text-xs mt-1">
-                      {{ trip.source === "chat" ? "AI" : "Manual" }}
+                    <!-- ✅ budget_category is the correct DB column -->
+                    <UBadge color="neutral" variant="subtle" class="text-xs mt-1">
+                      {{ trip.budget_category ?? "-" }}
                     </UBadge>
                   </div>
                 </div>
 
-                <p v-if="trip.notes || trip.budget_info?.style_description" class="text-xs text-zinc-400 mt-3 pt-3 border-t border-zinc-50 dark:border-zinc-800 line-clamp-2">
-                  {{ trip.notes ?? trip.budget_info?.style_description }}
+                <!-- ✅ budget_category as the description line -->
+                <p class="text-xs text-zinc-400 mt-3 pt-3 border-t border-zinc-50 dark:border-zinc-800 line-clamp-2">
+                  {{ trip.budget_category }}
                 </p>
               </div>
             </div>

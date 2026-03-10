@@ -221,6 +221,11 @@ const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").
             <p class="text-zinc-500 text-xs">{{ hotel.area }}</p>
             <UBadge color="neutral" variant="subtle" class="mt-1 text-xs">{{ hotel.category }}</UBadge>
             <p class="text-orange-500 mt-1">{{ formatRupiah(hotel.estimated_price_per_night) }} / malam</p>
+
+            <div class="flex gap-2 mt-3">
+              <UButton v-if="hotel.booking_search_url" :to="hotel.booking_search_url" target="_blank" size="xs" color="primary" variant="soft" icon="i-heroicons-building-office-2"> Booking.com </UButton>
+              <UButton v-if="hotel.agoda_search_url" :to="hotel.agoda_search_url" target="_blank" size="xs" color="neutral" variant="soft" icon="i-heroicons-globe-alt"> Agoda </UButton>
+            </div>
           </div>
         </div>
       </UCard>
@@ -259,7 +264,7 @@ const formatFlightTime = (isoStr: string) => (isoStr ? isoStr.replace("T", " ").
 
       <!-- CTA -->
       <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
-        <UButton v-if="tripResult.booking_url" :to="tripResult.booking_url" target="_blank" color="primary" size="lg" icon="i-heroicons-ticket"> Cari Tiket di Google Flights </UButton>
+        <UButton v-if="tripResult.booking_url" :to="tripResult.booking_url" target="_blank" color="primary" size="lg" icon="i-heroicons-ticket"> Cari Tiket di Booking.comn </UButton>
         <UButton color="neutral" variant="outline" size="lg" icon="i-heroicons-arrow-path" @click="resetPlanner"> Buat Perjalanan Baru </UButton>
       </div>
     </div>
