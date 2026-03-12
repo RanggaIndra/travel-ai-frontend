@@ -150,6 +150,18 @@ const formatDuration = (iso: string) => {
               <span class="text-zinc-500 capitalize">{{ String(key).replaceAll("_", " ") }}</span>
               <span>{{ formatRupiah(val) }}</span>
             </div>
+
+            <!-- ✅ ADD: flight cost row (only shown if flight data exists) -->
+            <div v-if="tripResult.budget_info?.flight_cost" class="flex justify-between">
+              <span class="text-zinc-500">Tiket Pesawat (Live)</span>
+              <span class="text-blue-500">{{ formatRupiah(tripResult.budget_info.flight_cost) }}</span>
+            </div>
+
+            <!-- ✅ ADD: grand total separator row -->
+            <div class="flex justify-between pt-2 mt-1 border-t border-zinc-200 dark:border-zinc-700 font-semibold">
+              <span>Total Keseluruhan</span>
+              <span class="text-orange-500">{{ formatRupiah(tripResult.budget_info?.total_budget) }}</span>
+            </div>
           </div>
         </div>
       </UCard>

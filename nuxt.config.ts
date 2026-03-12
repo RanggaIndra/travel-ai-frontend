@@ -19,7 +19,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: "https://boots-canyon-dim-appropriations.trycloudflare.com/api",
+      apiBase: "https://any-seats-michigan-volume.trycloudflare.com/api",
     },
   },
 });
